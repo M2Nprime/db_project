@@ -1,4 +1,4 @@
-# Final and perfected models.py
+import datetime
 from django.db import models
 
 class Genre(models.Model):
@@ -12,6 +12,21 @@ class Person(models.Model):
     birthdate = models.DateField(db_column='BirthDate', blank=True, null=True)
     gender = models.CharField(db_column='Gender', max_length=50, blank=True, null=True)
     nationality = models.CharField(db_column='Nationality', max_length=100, blank=True, null=True)
+
+    # --- NEW CUSTOM PROPERTY ADDED ---
+    @property
+    def age(self):
+        """Calculates the person's current age based on their birthdate."""
+        if not self.birthdate:
+            return None # Return None if birthdate is not set
+        
+        today = datetime.date.today()
+        # Calculate age by subtracting years and adjusting for the birthday having passed this year
+        person_age = today.year - self.birthdate.year - ((today.month, today.day) < (self.birthdate.month, self.birthdate.day))
+        return person_age
+
+    class Meta:
+        db_table = 'person'
     class Meta: db_table = 'person'
 
 class Movie(models.Model):
@@ -24,6 +39,16 @@ class Movie(models.Model):
     posterurl = models.CharField(db_column='PosterURL', max_length=512, blank=True, null=True)
     tmdbscore = models.DecimalField(db_column='TMDbScore', max_digits=3, decimal_places=1, blank=True, null=True)
     directorid = models.ForeignKey(Person, models.SET_NULL, db_column='DirectorID', blank=True, null=True)
+    def get_duration_display(self):
+        """
+        Converts the duration in minutes to a human-readable format (e.g., '2h 22m').
+        """
+        if self.durationinminutes:
+            hours = self.durationinminutes // 60
+            minutes = self.durationinminutes % 60
+            return f"{hours}h {minutes}m"
+        return "N/A" # Return 'Not Available' if duration is not set
+    
     class Meta: db_table = 'movie'
 
 class User(models.Model):

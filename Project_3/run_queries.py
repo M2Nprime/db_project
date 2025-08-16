@@ -99,6 +99,31 @@ def run():
         for title in movie_titles:
             print(f"    - {title}")
 
+    # --- NEW QUERY TO TEST THE CUSTOM METHOD ---
+    print("\n--- Testing Custom Model Method ---")
+    
+    # Get a few movies that have a long duration
+    long_movies = Movie.objects.filter(durationinminutes__isnull=False).order_by('-durationinminutes')[:5]
+    
+    print("Displaying movie duration using the custom model method:")
+    for movie in long_movies:
+        # We can call our new method directly on the movie object!
+        print(f"  - {movie.title}: {movie.get_duration_display()}")
+
+    # --- NEW SECTION TO TEST THE CUSTOM PROPERTY ---
+    print("\n--- Testing Custom Model Property (@property) ---")
+    
+    # Get one person who has a birthdate recorded in the database
+    actor_with_bday = Person.objects.filter(birthdate__isnull=False).first()
+    
+    if actor_with_bday:
+        print(f"Testing with actor: {actor_with_bday.fullname}")
+        # Access the 'age' property just like a regular field (NO parentheses!)
+        print(f"  - Birth Date: {actor_with_bday.birthdate}")
+        print(f"  - Calculated Age: {actor_with_bday.age} years old")
+    else:
+        print("  - Could not find any actor with a birthdate to test.")
+        
 # --- Main execution block ---
 if __name__ == "__main__":
     run()
