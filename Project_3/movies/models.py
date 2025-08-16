@@ -1,10 +1,16 @@
+# Final, perfected models.py with ManyToManyField for robust relationships
 import datetime
 from django.db import models
 
 class Genre(models.Model):
     genreid = models.AutoField(db_column='GenreID', primary_key=True)
     genrename = models.CharField(db_column='GenreName', unique=True, max_length=100)
-    class Meta: db_table = 'genre'
+    
+    def __str__(self):
+        return self.genrename
+
+    class Meta:
+        db_table = 'genre'
 
 class Person(models.Model):
     personid = models.AutoField(db_column='PersonID', primary_key=True)
@@ -13,21 +19,17 @@ class Person(models.Model):
     gender = models.CharField(db_column='Gender', max_length=50, blank=True, null=True)
     nationality = models.CharField(db_column='Nationality', max_length=100, blank=True, null=True)
 
-    # --- NEW CUSTOM PROPERTY ADDED ---
     @property
     def age(self):
-        """Calculates the person's current age based on their birthdate."""
-        if not self.birthdate:
-            return None # Return None if birthdate is not set
-        
+        if not self.birthdate: return None
         today = datetime.date.today()
-        # Calculate age by subtracting years and adjusting for the birthday having passed this year
-        person_age = today.year - self.birthdate.year - ((today.month, today.day) < (self.birthdate.month, self.birthdate.day))
-        return person_age
+        return today.year - self.birthdate.year - ((today.month, today.day) < (self.birthdate.month, self.birthdate.day))
+
+    def __str__(self):
+        return self.fullname
 
     class Meta:
         db_table = 'person'
-    class Meta: db_table = 'person'
 
 class Movie(models.Model):
     movieid = models.AutoField(db_column='MovieID', primary_key=True)
@@ -38,18 +40,24 @@ class Movie(models.Model):
     country = models.CharField(db_column='Country', max_length=100, blank=True, null=True)
     posterurl = models.CharField(db_column='PosterURL', max_length=512, blank=True, null=True)
     tmdbscore = models.DecimalField(db_column='TMDbScore', max_digits=3, decimal_places=1, blank=True, null=True)
-    directorid = models.ForeignKey(Person, models.SET_NULL, db_column='DirectorID', blank=True, null=True)
+    directorid = models.ForeignKey(Person, models.SET_NULL, db_column='DirectorID', blank=True, null=True, related_name='directed_movies')
+    
+    # --- NEW ManyToManyField DEFINITIONS ---
+    genres = models.ManyToManyField(Genre, through='MovieGenre')
+    actors = models.ManyToManyField(Person, through='MovieActor')
+
     def get_duration_display(self):
-        """
-        Converts the duration in minutes to a human-readable format (e.g., '2h 22m').
-        """
         if self.durationinminutes:
             hours = self.durationinminutes // 60
             minutes = self.durationinminutes % 60
             return f"{hours}h {minutes}m"
-        return "N/A" # Return 'Not Available' if duration is not set
+        return "N/A"
     
-    class Meta: db_table = 'movie'
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        db_table = 'movie'
 
 class User(models.Model):
     userid = models.AutoField(db_column='UserID', primary_key=True)
@@ -57,24 +65,29 @@ class User(models.Model):
     email = models.CharField(db_column='Email', unique=True, max_length=255)
     passwordhash = models.CharField(db_column='PasswordHash', max_length=255)
     createdat = models.DateTimeField(db_column='CreatedAt', blank=True, null=True)
-    class Meta: db_table = 'user'
+    
+    def __str__(self):
+        return self.username
+
+    class Meta:
+        db_table = 'user'
 
 class MovieGenre(models.Model):
-    movieid = models.ForeignKey(Movie, models.CASCADE, db_column='MovieID')
+    movieid = models.ForeignKey(Movie, models.CASCADE, db_column='MovieID', primary_key=True)
     genreid = models.ForeignKey(Genre, models.CASCADE, db_column='GenreID')
     class Meta:
         db_table = 'movie_genre'
         unique_together = (('movieid', 'genreid'),)
 
 class MovieActor(models.Model):
-    movieid = models.ForeignKey(Movie, models.CASCADE, db_column='MovieID')
+    movieid = models.ForeignKey(Movie, models.CASCADE, db_column='MovieID', primary_key=True)
     personid = models.ForeignKey(Person, models.CASCADE, db_column='PersonID')
     class Meta:
         db_table = 'movie_actor'
         unique_together = (('movieid', 'personid'),)
 
 class Rating(models.Model):
-    userid = models.ForeignKey(User, models.CASCADE, db_column='UserID')
+    userid = models.ForeignKey(User, models.CASCADE, db_column='UserID', primary_key=True)
     movieid = models.ForeignKey(Movie, models.CASCADE, db_column='MovieID')
     score = models.IntegerField(db_column='Score')
     ratedat = models.DateTimeField(db_column='RatedAt', blank=True, null=True)
