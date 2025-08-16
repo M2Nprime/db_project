@@ -157,7 +157,7 @@ ORDER BY
 -- Example 1: See everything in the view
 SELECT * FROM v_MovieWithDirector;
     
--- Example 2: You can even filter and order the view
+-- Example 2: filter and order the view
 SELECT 
     Title, 
     DirectorName 

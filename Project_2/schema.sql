@@ -1,5 +1,5 @@
 -- =================================================================
--- File: schema.sql (Smart Version)
+-- File: schema.sql
 -- Purpose: Defines the database structure. Can be run multiple times without errors.
 -- =================================================================
 
